@@ -697,35 +697,35 @@
       'Notes': document.getElementById('q-notes').value.trim(),
     };
 
-    // FormSubmit
-    const form = document.createElement('form');
-    form.action = 'https://formsubmit.co/ajax/mark@hibear.co';
-    form.method = 'POST';
-    form.style.display = 'none';
+    // POST to Supabase
+    const SUPABASE_URL = "https://fxuxmoicqvhlnwtpzlgm.supabase.co";
+    const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4dXhtb2ljcXZobG53dHB6bGdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0OTMyNzAsImV4cCI6MjA4ODA2OTI3MH0.VdMyy0IG_0EmWDPT--O8nTJROlbQM0FN9ae9Ny_aWZI";
 
-    const addField = (name, val) => {
-      const inp = document.createElement('input');
-      inp.type = 'hidden'; inp.name = name; inp.value = val;
-      form.appendChild(inp);
-    };
-
-    addField('_subject', `Sample Request — ${data['Business Name']} (${data['Business Type']})`);
-    addField('_template', 'table');
-    addField('_captcha', 'false');
-    Object.entries(data).forEach(([k,v]) => addField(k, v));
-    document.body.appendChild(form);
-
-    fetch(form.action, {
+    fetch(`${SUPABASE_URL}/rest/v1/sample_requests`, {
       method: 'POST',
-      body: new FormData(form),
-      headers: { Accept: 'application/json' }
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON,
+        'Authorization': `Bearer ${SUPABASE_ANON}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        first_name: data['First Name'],
+        last_name: data['Last Name'],
+        email: data['Email'],
+        business_name: data['Business Name'],
+        business_type: data['Business Type'],
+        products: data['Products'],
+        monthly_volume: data['Monthly Volume'],
+        ship_to: data['Ship To'],
+        notes: data['Notes'],
+        status: 'new'
+      })
     }).finally(() => {
-      document.body.removeChild(form);
       showSlide(slides.length - 1);
       document.getElementById('nav').style.display = 'none';
       document.getElementById('progress-bar').style.width = '100%';
     });
-  }
 
   // Keyboard nav
   document.addEventListener('keydown', e => {
