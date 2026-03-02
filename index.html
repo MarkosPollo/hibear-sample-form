@@ -3,452 +3,763 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hibear — Sample Request</title>
+  <title>Hibear — Request a Sample</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --black: #0d0d0d;
-      --white: #ffffff;
-      --gray: #f4f4f4;
-      --mid: #888;
-      --accent: #d4531a;
-      --border: #e0e0e0;
-      --radius: 8px;
+      --bg: #0d0d0d;
+      --fg: #ffffff;
+      --accent: #ffffff;
+      --muted: rgba(255,255,255,0.45);
+      --border: rgba(255,255,255,0.15);
+      --input-border: rgba(255,255,255,0.25);
+      --input-focus: rgba(255,255,255,0.9);
+      --btn-bg: #ffffff;
+      --btn-fg: #0d0d0d;
     }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-      background: var(--gray);
-      color: var(--black);
-      min-height: 100vh;
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      overflow: hidden;
+    }
+
+    /* Progress bar */
+    #progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 3px;
+      background: var(--fg);
+      width: 0%;
+      transition: width 0.4s ease;
+      z-index: 100;
+    }
+
+    /* Logo */
+    #logo {
+      position: fixed;
+      top: 20px; left: 28px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--fg);
+      z-index: 100;
+      opacity: 0.85;
+    }
+
+    /* Slide container */
+    #slides {
+      height: 100vh;
+      position: relative;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
       display: flex;
       flex-direction: column;
+      justify-content: center;
+      padding: 0 clamp(24px, 8vw, 120px);
+      max-width: 780px;
+      margin: 0 auto;
+      width: 100%;
+      left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease, transform 0.35s ease;
     }
 
-    header {
-      background: var(--black);
-      padding: 20px 32px;
+    .slide.active {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: all;
+    }
+
+    .slide.exit {
+      opacity: 0;
+      transform: translateX(-50%) translateY(-40px);
+    }
+
+    .slide-num {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .slide-num span { color: var(--fg); }
+
+    .slide h2 {
+      font-size: clamp(22px, 4vw, 36px);
+      font-weight: 600;
+      line-height: 1.3;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .slide h2 em {
+      font-style: normal;
+      background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.6) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .slide-sub {
+      font-size: 15px;
+      color: var(--muted);
+      margin-bottom: 36px;
+      line-height: 1.5;
+    }
+
+    /* Inputs */
+    .input-wrap {
+      position: relative;
+      margin-bottom: 8px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="url"],
+    select {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid var(--input-border);
+      color: var(--fg);
+      font-size: clamp(18px, 3vw, 26px);
+      font-family: inherit;
+      font-weight: 400;
+      padding: 8px 0 12px;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+      letter-spacing: -0.01em;
+    }
+
+    input::placeholder { color: var(--muted); }
+
+    select {
+      -webkit-appearance: none;
+      appearance: none;
+      cursor: pointer;
+    }
+
+    select option { background: #1a1a1a; color: #fff; }
+
+    input:focus, select:focus { border-color: var(--input-focus); }
+
+    /* Choices / cards */
+    .choices {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .choice {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 20px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      user-select: none;
     }
 
-    header img { height: 32px; }
+    .choice:hover { border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.04); }
+    .choice.selected { border-color: var(--fg); background: rgba(255,255,255,0.08); }
 
-    header span {
-      color: var(--mid);
+    .choice-key {
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      flex-shrink: 0;
+      transition: border-color 0.15s;
+    }
+
+    .choice.selected .choice-key { border-color: var(--fg); color: var(--fg); }
+
+    .choice-text { font-size: 15px; font-weight: 500; line-height: 1.3; }
+    .choice-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .choices.multi .choice::after {
+      content: '';
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      margin-left: auto;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .choices.multi .choice.selected::after {
+      background: var(--fg);
+      border-color: var(--fg);
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 12 12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolyline points='2,6 5,9 10,3' stroke='%230d0d0d' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-size: 12px;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    /* CTA button */
+    .btn-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 28px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: var(--btn-bg);
+      color: var(--btn-fg);
+      border: none;
+      border-radius: 6px;
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: opacity 0.15s;
+    }
+
+    .btn:hover { opacity: 0.88; }
+
+    .btn-hint {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn-hint kbd {
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-family: inherit;
+      color: var(--muted);
+    }
+
+    /* Error */
+    .err {
+      color: #ff6b6b;
       font-size: 13px;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
+      margin-top: 8px;
+      min-height: 18px;
     }
 
-    .hero {
-      background: var(--black);
-      color: var(--white);
-      padding: 48px 32px 56px;
+    /* Nav arrows */
+    #nav {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      display: flex;
+      gap: 8px;
+      z-index: 100;
+    }
+
+    .nav-btn {
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--fg);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.15s;
+    }
+
+    .nav-btn:hover { border-color: rgba(255,255,255,0.5); }
+    .nav-btn:disabled { opacity: 0.25; cursor: default; }
+
+    /* Intro slide */
+    .intro-slide {
       text-align: center;
+      align-items: center;
+      max-width: 600px;
     }
 
-    .hero h1 {
-      font-size: clamp(28px, 5vw, 44px);
+    .intro-slide h1 {
+      font-size: clamp(32px, 6vw, 56px);
       font-weight: 700;
-      letter-spacing: -0.02em;
-      line-height: 1.1;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      margin-bottom: 20px;
     }
 
-    .hero p {
-      margin-top: 16px;
-      color: #aaa;
-      font-size: 16px;
-      max-width: 520px;
-      margin-inline: auto;
+    .intro-slide p {
+      font-size: 17px;
+      color: var(--muted);
       line-height: 1.6;
+      margin-bottom: 36px;
+      max-width: 460px;
     }
 
     .badges {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       justify-content: center;
-      margin-top: 24px;
       flex-wrap: wrap;
+      margin-bottom: 40px;
     }
 
     .badge {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.15);
+      border: 1px solid var(--border);
       border-radius: 100px;
-      padding: 6px 14px;
+      padding: 5px 13px;
       font-size: 12px;
-      color: #ccc;
-      letter-spacing: 0.03em;
+      color: var(--muted);
     }
 
-    .card {
-      background: var(--white);
-      border-radius: var(--radius);
-      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
-      max-width: 680px;
-      width: 100%;
-      margin: -28px auto 48px;
-      padding: 40px;
-    }
-
-    .section-label {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--mid);
-      margin-bottom: 20px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-bottom: 16px;
-    }
-
-    .field.full { grid-column: 1 / -1; }
-
-    label {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--black);
-    }
-
-    label .req { color: var(--accent); margin-left: 2px; }
-    label .opt { color: var(--mid); font-weight: 400; font-size: 12px; margin-left: 4px; }
-
-    input, select, textarea {
-      border: 1px solid var(--border);
+    .start-btn {
+      background: var(--fg);
+      color: var(--bg);
+      border: none;
       border-radius: 6px;
-      padding: 10px 14px;
-      font-size: 14px;
+      padding: 14px 32px;
+      font-size: 16px;
+      font-weight: 700;
       font-family: inherit;
-      color: var(--black);
-      background: var(--white);
-      transition: border-color 0.15s;
-      width: 100%;
-    }
-
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: var(--black);
-    }
-
-    textarea { resize: vertical; min-height: 90px; }
-
-    .products {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 10px;
-      margin-top: 4px;
-    }
-
-    .product-check {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      padding: 12px 14px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
-    }
-
-    .product-check:hover { border-color: #bbb; background: #fafafa; }
-
-    .product-check input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-      min-width: 16px;
-      margin-top: 2px;
-      cursor: pointer;
-      accent-color: var(--black);
-      border: none;
-      padding: 0;
-    }
-
-    .product-check span {
-      font-size: 13px;
-      font-weight: 500;
-      line-height: 1.3;
-    }
-
-    .product-check small {
-      display: block;
-      color: var(--mid);
-      font-size: 11px;
-      font-weight: 400;
-      margin-top: 2px;
-    }
-
-    .divider {
-      height: 1px;
-      background: var(--border);
-      margin: 28px 0;
-    }
-
-    .submit-btn {
-      width: 100%;
-      background: var(--black);
-      color: var(--white);
-      border: none;
-      border-radius: 6px;
-      padding: 14px;
-      font-size: 15px;
-      font-weight: 600;
       cursor: pointer;
       letter-spacing: 0.01em;
-      transition: background 0.15s;
+      transition: opacity 0.15s;
     }
 
-    .submit-btn:hover { background: #333; }
+    .start-btn:hover { opacity: 0.85; }
 
-    .fine-print {
+    /* End slide */
+    .end-slide {
       text-align: center;
-      font-size: 12px;
-      color: var(--mid);
-      margin-top: 14px;
-      line-height: 1.6;
+      align-items: center;
     }
 
-    .success {
-      display: none;
-      text-align: center;
-      padding: 48px 32px;
-    }
-
-    .success h2 { font-size: 24px; margin-bottom: 12px; }
-    .success p { color: var(--mid); font-size: 15px; line-height: 1.6; }
-
-    .checkmark {
-      width: 56px;
-      height: 56px;
-      background: var(--black);
+    .check-circle {
+      width: 64px;
+      height: 64px;
       border-radius: 50%;
+      border: 2px solid var(--fg);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 20px;
+      margin-bottom: 28px;
     }
 
-    .checkmark svg { width: 28px; height: 28px; }
-
-    footer {
-      text-align: center;
-      font-size: 12px;
-      color: var(--mid);
-      padding: 24px;
-      margin-top: auto;
-    }
+    .end-slide h2 { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; }
+    .end-slide p { font-size: 16px; color: var(--muted); line-height: 1.6; max-width: 420px; }
 
     @media (max-width: 600px) {
-      .card { padding: 24px 20px; margin: -20px 16px 32px; }
-      .grid-2 { grid-template-columns: 1fr; }
-      .hero { padding: 36px 20px 44px; }
+      .slide { padding: 0 24px; }
+      #nav { bottom: 16px; right: 16px; }
     }
   </style>
 </head>
 <body>
 
-<header>
-  <svg width="100" height="28" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <text x="0" y="24" font-family="-apple-system, sans-serif" font-size="22" font-weight="700" fill="white" letter-spacing="-0.5">HIBEAR</text>
-  </svg>
-  <span>Wholesale</span>
-</header>
+<div id="progress-bar"></div>
+<div id="logo">HIBEAR</div>
 
-<div class="hero">
-  <h1>Request a Sample</h1>
-  <p>We'll send you the All Day Adventure Flask so you can see — and feel — why it moves off shelves.</p>
-  <div class="badges">
-    <span class="badge">🏆 Red Dot Award Winner</span>
-    <span class="badge">🏆 iF Design Award</span>
-    <span class="badge">📺 As Seen on Shark Tank</span>
+<div id="slides">
+
+  <!-- INTRO -->
+  <div class="slide intro-slide active" data-index="0">
+    <h1>Request a<br>Sample</h1>
+    <p>See why the All Day Adventure Flask sells itself. We'll ship one to you — no commitment.</p>
+    <div class="badges">
+      <span class="badge">🏆 Red Dot Award</span>
+      <span class="badge">🏆 iF Design Award</span>
+      <span class="badge">📺 Shark Tank</span>
+    </div>
+    <button class="start-btn" onclick="next()">Get Started →</button>
   </div>
-</div>
 
-<div class="card">
+  <!-- Q1: First name -->
+  <div class="slide" data-index="1">
+    <div class="slide-num"><span>1</span> / 9</div>
+    <h2>What's your <em>first name?</em></h2>
+    <div class="input-wrap">
+      <input type="text" id="q-first" placeholder="Jane" autocomplete="given-name">
+    </div>
+    <div class="err" id="err-1"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="next()">OK <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polyline points="3,7 7,11 11,7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="7" y1="3" x2="7" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      <span class="btn-hint">press <kbd>Enter</kbd></span>
+    </div>
+  </div>
 
-  <div class="success" id="successMsg">
-    <div class="checkmark">
-      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="20 6 9 17 4 12"/>
+  <!-- Q2: Last name -->
+  <div class="slide" data-index="2">
+    <div class="slide-num"><span>2</span> / 9</div>
+    <h2>And your <em>last name?</em></h2>
+    <div class="input-wrap">
+      <input type="text" id="q-last" placeholder="Smith" autocomplete="family-name">
+    </div>
+    <div class="err" id="err-2"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="next()">OK <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polyline points="3,7 7,11 11,7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="7" y1="3" x2="7" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      <span class="btn-hint">press <kbd>Enter</kbd></span>
+    </div>
+  </div>
+
+  <!-- Q3: Email -->
+  <div class="slide" data-index="3">
+    <div class="slide-num"><span>3</span> / 9</div>
+    <h2>What's your <em>email address?</em></h2>
+    <div class="input-wrap">
+      <input type="email" id="q-email" placeholder="jane@yourstore.com" autocomplete="email">
+    </div>
+    <div class="err" id="err-3"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="next()">OK <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polyline points="3,7 7,11 11,7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="7" y1="3" x2="7" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      <span class="btn-hint">press <kbd>Enter</kbd></span>
+    </div>
+  </div>
+
+  <!-- Q4: Business name -->
+  <div class="slide" data-index="4">
+    <div class="slide-num"><span>4</span> / 9</div>
+    <h2>What's your <em>business name?</em></h2>
+    <div class="input-wrap">
+      <input type="text" id="q-biz" placeholder="Adventure Outfitters Co." autocomplete="organization">
+    </div>
+    <div class="err" id="err-4"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="next()">OK <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polyline points="3,7 7,11 11,7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="7" y1="3" x2="7" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      <span class="btn-hint">press <kbd>Enter</kbd></span>
+    </div>
+  </div>
+
+  <!-- Q5: Business type -->
+  <div class="slide" data-index="5">
+    <div class="slide-num"><span>5</span> / 9</div>
+    <h2>What type of <em>business</em> are you?</h2>
+    <p class="slide-sub">Choose the one that fits best.</p>
+    <div class="choices" id="q-type">
+      <div class="choice" data-val="Retail Store / Gift Shop" onclick="selectChoice(this,'q-type')">
+        <div class="choice-key">A</div>
+        <div><div class="choice-text">Retail Store / Gift Shop</div></div>
+      </div>
+      <div class="choice" data-val="Outdoor / Sporting Goods" onclick="selectChoice(this,'q-type')">
+        <div class="choice-key">B</div>
+        <div><div class="choice-text">Outdoor / Sporting Goods</div></div>
+      </div>
+      <div class="choice" data-val="Corporate / Promotional Products" onclick="selectChoice(this,'q-type')">
+        <div class="choice-key">C</div>
+        <div><div class="choice-text">Corporate / Promotional Products</div></div>
+      </div>
+      <div class="choice" data-val="Hotel / Hospitality" onclick="selectChoice(this,'q-type')">
+        <div class="choice-key">D</div>
+        <div><div class="choice-text">Hotel / Hospitality / Golf</div></div>
+      </div>
+      <div class="choice" data-val="Online Retailer / Subscription Box" onclick="selectChoice(this,'q-type')">
+        <div class="choice-key">E</div>
+        <div><div class="choice-text">Online Retailer / Subscription Box</div></div>
+      </div>
+      <div class="choice" data-val="Other" onclick="selectChoice(this,'q-type')">
+        <div class="choice-key">F</div>
+        <div><div class="choice-text">Other</div></div>
+      </div>
+    </div>
+    <div class="err" id="err-5"></div>
+  </div>
+
+  <!-- Q6: Products -->
+  <div class="slide" data-index="6">
+    <div class="slide-num"><span>6</span> / 9</div>
+    <h2>Which products <em>interest you?</em></h2>
+    <p class="slide-sub">Select all that apply.</p>
+    <div class="choices multi" id="q-products">
+      <div class="choice" data-val="All Day Adventure Flask ($95 MSRP)" onclick="toggleChoice(this)">
+        <div class="choice-key">A</div>
+        <div><div class="choice-text">All Day Adventure Flask</div><div class="choice-sub">$95 MSRP · Flagship product</div></div>
+      </div>
+      <div class="choice" data-val="Flask + Hat Bundle" onclick="toggleChoice(this)">
+        <div class="choice-key">B</div>
+        <div><div class="choice-text">Flask + Hat Bundle</div><div class="choice-sub">Bestselling bundle</div></div>
+      </div>
+      <div class="choice" data-val="Custom Logo Flask (50 unit min)" onclick="toggleChoice(this)">
+        <div class="choice-key">C</div>
+        <div><div class="choice-text">Custom Logo Flask</div><div class="choice-sub">Laser engraved · 50 unit minimum</div></div>
+      </div>
+      <div class="choice" data-val="Show me the full line" onclick="toggleChoice(this)">
+        <div class="choice-key">D</div>
+        <div><div class="choice-text">Show me everything</div><div class="choice-sub">Send the full line sheet</div></div>
+      </div>
+    </div>
+    <div class="err" id="err-6"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="next()">OK <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polyline points="3,7 7,11 11,7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="7" y1="3" x2="7" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    </div>
+  </div>
+
+  <!-- Q7: Volume -->
+  <div class="slide" data-index="7">
+    <div class="slide-num"><span>7</span> / 9</div>
+    <h2>Estimated <em>monthly volume?</em></h2>
+    <p class="slide-sub">A rough idea is fine.</p>
+    <div class="choices" id="q-volume">
+      <div class="choice" data-val="Under 25 units" onclick="selectChoice(this,'q-volume',true)">
+        <div class="choice-key">A</div>
+        <div class="choice-text">Under 25 units</div>
+      </div>
+      <div class="choice" data-val="25–100 units" onclick="selectChoice(this,'q-volume',true)">
+        <div class="choice-key">B</div>
+        <div class="choice-text">25–100 units</div>
+      </div>
+      <div class="choice" data-val="100–500 units" onclick="selectChoice(this,'q-volume',true)">
+        <div class="choice-key">C</div>
+        <div class="choice-text">100–500 units</div>
+      </div>
+      <div class="choice" data-val="500+ units" onclick="selectChoice(this,'q-volume',true)">
+        <div class="choice-key">D</div>
+        <div class="choice-text">500+ units</div>
+      </div>
+      <div class="choice" data-val="Not sure yet" onclick="selectChoice(this,'q-volume',true)">
+        <div class="choice-key">E</div>
+        <div class="choice-text">Not sure yet</div>
+      </div>
+    </div>
+    <div class="err" id="err-7"></div>
+  </div>
+
+  <!-- Q8: Ship to -->
+  <div class="slide" data-index="8">
+    <div class="slide-num"><span>8</span> / 9</div>
+    <h2>Where should we <em>ship the sample?</em></h2>
+    <p class="slide-sub">Full address including city, state, and zip.</p>
+    <div class="input-wrap">
+      <input type="text" id="q-address" placeholder="123 Main St, Denver, CO 80203" autocomplete="street-address">
+    </div>
+    <div class="err" id="err-8"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="next()">OK <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polyline points="3,7 7,11 11,7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="7" y1="3" x2="7" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      <span class="btn-hint">press <kbd>Enter</kbd></span>
+    </div>
+  </div>
+
+  <!-- Q9: Anything else -->
+  <div class="slide" data-index="9">
+    <div class="slide-num"><span>9</span> / 9</div>
+    <h2>Anything else <em>we should know?</em></h2>
+    <p class="slide-sub">Custom requirements, timing, questions — anything helps. Or just hit submit.</p>
+    <div class="input-wrap">
+      <input type="text" id="q-notes" placeholder="Optional">
+    </div>
+    <div class="btn-row">
+      <button class="btn" onclick="submit()">Submit →</button>
+    </div>
+  </div>
+
+  <!-- END -->
+  <div class="slide end-slide" data-index="10">
+    <div class="check-circle">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polyline points="6,14 12,20 22,9" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
-    <h2>Request received.</h2>
-    <p>We'll reach out within 1–2 business days to confirm your sample shipment.<br>We'll need your FedEx or UPS account number for shipping.</p>
+    <h2>You're all set.</h2>
+    <p>We'll reach out within 1–2 business days to confirm your sample shipment. Keep an eye on your inbox.</p>
   </div>
 
-  <form id="sampleForm" action="https://formsubmit.co/mark@hibear.co" method="POST">
-    <!-- FormSubmit config -->
-    <input type="hidden" name="_subject" value="New Sample Request — Hibear Wholesale">
-    <input type="hidden" name="_captcha" value="false">
-    <input type="hidden" name="_template" value="table">
-    <input type="hidden" name="_next" value="">
-
-    <div class="section-label">Your Info</div>
-
-    <div class="grid-2">
-      <div class="field">
-        <label>First Name <span class="req">*</span></label>
-        <input type="text" name="First Name" required placeholder="Jane">
-      </div>
-      <div class="field">
-        <label>Last Name <span class="req">*</span></label>
-        <input type="text" name="Last Name" required placeholder="Smith">
-      </div>
-      <div class="field">
-        <label>Email <span class="req">*</span></label>
-        <input type="email" name="Email" required placeholder="jane@yourstore.com">
-      </div>
-      <div class="field">
-        <label>Phone <span class="opt">(optional)</span></label>
-        <input type="tel" name="Phone" placeholder="(555) 000-0000">
-      </div>
-    </div>
-
-    <div class="divider"></div>
-    <div class="section-label">Your Business</div>
-
-    <div class="grid-2">
-      <div class="field full">
-        <label>Business Name <span class="req">*</span></label>
-        <input type="text" name="Business Name" required placeholder="Adventure Outfitters Co.">
-      </div>
-      <div class="field full">
-        <label>Website <span class="opt">(optional)</span></label>
-        <input type="url" name="Website" placeholder="https://yourstore.com">
-      </div>
-      <div class="field">
-        <label>Business Type <span class="req">*</span></label>
-        <select name="Business Type" required>
-          <option value="" disabled selected>Select one</option>
-          <option>Retail Store</option>
-          <option>Gift Shop</option>
-          <option>Outdoor / Sporting Goods</option>
-          <option>Corporate / Promotional Products</option>
-          <option>Corporate Gifting Platform</option>
-          <option>Hotel / Hospitality</option>
-          <option>Golf Pro Shop / Country Club</option>
-          <option>Military / Tactical Retail</option>
-          <option>Online Retailer</option>
-          <option>Subscription Box</option>
-          <option>Other</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Estimated Monthly Order Volume</label>
-        <select name="Est. Monthly Volume">
-          <option value="" disabled selected>Select range</option>
-          <option>Under 25 units</option>
-          <option>25–50 units</option>
-          <option>50–100 units</option>
-          <option>100–250 units</option>
-          <option>250–500 units</option>
-          <option>500+ units</option>
-          <option>Not sure yet</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="divider"></div>
-    <div class="section-label">Products You're Interested In</div>
-
-    <div class="products">
-      <label class="product-check">
-        <input type="checkbox" name="Products" value="All Day Adventure Flask">
-        <div>
-          <span>All Day Adventure Flask</span>
-          <small>$95 MSRP · Flagship</small>
-        </div>
-      </label>
-      <label class="product-check">
-        <input type="checkbox" name="Products" value="All Day Adventure Flask + Hat Bundle">
-        <div>
-          <span>Flask + Hat Bundle</span>
-          <small>Bestselling bundle</small>
-        </div>
-      </label>
-      <label class="product-check">
-        <input type="checkbox" name="Products" value="Custom Logo Flask (50+ units)">
-        <div>
-          <span>Custom Logo Flask</span>
-          <small>50 unit min · Laser engrave</small>
-        </div>
-      </label>
-      <label class="product-check">
-        <input type="checkbox" name="Products" value="Not sure yet — show me everything">
-        <div>
-          <span>Not sure yet</span>
-          <small>Send me the full line</small>
-        </div>
-      </label>
-    </div>
-
-    <div class="divider"></div>
-    <div class="section-label">Shipping</div>
-
-    <div class="grid-2">
-      <div class="field full">
-        <label>Ship To Address <span class="req">*</span></label>
-        <input type="text" name="Ship To Address" required placeholder="123 Main St, Denver, CO 80203">
-      </div>
-      <div class="field">
-        <label>Carrier Account # <span class="opt">(optional)</span></label>
-        <input type="text" name="Carrier Account" placeholder="FedEx or UPS account #">
-      </div>
-      <div class="field">
-        <label>Carrier</label>
-        <select name="Carrier">
-          <option value="">I don't have one</option>
-          <option>FedEx</option>
-          <option>UPS</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="field">
-      <label>Anything else we should know? <span class="opt">(optional)</span></label>
-      <textarea name="Notes" placeholder="Custom requirements, event dates, specific SKUs, questions..."></textarea>
-    </div>
-
-    <button type="submit" class="submit-btn">Request Sample →</button>
-    <p class="fine-print">We'll follow up within 1–2 business days. No commitment required.</p>
-  </form>
 </div>
 
-<footer>
-  © 2026 Hibear, Inc. · <a href="https://hibear.co" style="color:inherit">hibear.co</a>
-</footer>
+<!-- Nav arrows -->
+<div id="nav">
+  <button class="nav-btn" id="prev-btn" onclick="prev()" disabled title="Previous">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><polyline points="10,4 6,8 10,12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+  </button>
+  <button class="nav-btn" id="next-btn" onclick="next()" title="Next">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><polyline points="6,4 10,8 6,12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+  </button>
+</div>
 
 <script>
-  document.getElementById('sampleForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const form = this;
-    const data = new FormData(form);
+  let current = 0;
+  const TOTAL = 9;
+  const slides = document.querySelectorAll('.slide');
+
+  function showSlide(index) {
+    const prev = document.querySelector('.slide.active');
+    if (prev) {
+      prev.classList.add('exit');
+      setTimeout(() => prev.classList.remove('active', 'exit'), 350);
+    }
+    slides[index].classList.add('active');
+    document.getElementById('progress-bar').style.width =
+      index === 0 ? '0%' : `${Math.round((index / TOTAL) * 100)}%`;
+    document.getElementById('prev-btn').disabled = index <= 0;
+    document.getElementById('next-btn').style.display = (index >= slides.length - 1) ? 'none' : '';
+
+    // Focus first input in new slide
+    setTimeout(() => {
+      const inp = slides[index].querySelector('input');
+      if (inp) inp.focus();
+    }, 360);
+    current = index;
+  }
+
+  function validate() {
+    const err = document.getElementById(`err-${current}`);
+    if (err) err.textContent = '';
+
+    if (current === 1) {
+      const v = document.getElementById('q-first').value.trim();
+      if (!v) { err.textContent = 'Please enter your first name.'; return false; }
+    }
+    if (current === 2) {
+      const v = document.getElementById('q-last').value.trim();
+      if (!v) { err.textContent = 'Please enter your last name.'; return false; }
+    }
+    if (current === 3) {
+      const v = document.getElementById('q-email').value.trim();
+      if (!v || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { err.textContent = 'Please enter a valid email address.'; return false; }
+    }
+    if (current === 4) {
+      const v = document.getElementById('q-biz').value.trim();
+      if (!v) { err.textContent = 'Please enter your business name.'; return false; }
+    }
+    if (current === 5) {
+      const sel = document.querySelector('#q-type .choice.selected');
+      if (!sel) { err.textContent = 'Please select a business type.'; return false; }
+    }
+    if (current === 6) {
+      const sel = document.querySelectorAll('#q-products .choice.selected');
+      if (!sel.length) { err.textContent = 'Please select at least one product.'; return false; }
+    }
+    if (current === 7) {
+      const sel = document.querySelector('#q-volume .choice.selected');
+      if (!sel) { err.textContent = 'Please select an option.'; return false; }
+    }
+    if (current === 8) {
+      const v = document.getElementById('q-address').value.trim();
+      if (!v) { err.textContent = 'Please enter a shipping address.'; return false; }
+    }
+    return true;
+  }
+
+  function next() {
+    if (current === 0) { showSlide(1); return; }
+    if (current >= slides.length - 2) return;
+    if (!validate()) return;
+    showSlide(current + 1);
+  }
+
+  function prev() {
+    if (current <= 0) return;
+    showSlide(current - 1);
+  }
+
+  function selectChoice(el, groupId, autoAdvance) {
+    document.querySelectorAll(`#${groupId} .choice`).forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    if (autoAdvance) setTimeout(next, 340);
+  }
+
+  function toggleChoice(el) {
+    el.classList.toggle('selected');
+  }
+
+  function submit() {
+    if (!validate()) return;
+
+    const data = {
+      'First Name': document.getElementById('q-first').value.trim(),
+      'Last Name': document.getElementById('q-last').value.trim(),
+      'Email': document.getElementById('q-email').value.trim(),
+      'Business Name': document.getElementById('q-biz').value.trim(),
+      'Business Type': document.querySelector('#q-type .choice.selected')?.dataset.val || '',
+      'Products': [...document.querySelectorAll('#q-products .choice.selected')].map(c => c.dataset.val).join(', '),
+      'Monthly Volume': document.querySelector('#q-volume .choice.selected')?.dataset.val || '',
+      'Ship To': document.getElementById('q-address').value.trim(),
+      'Notes': document.getElementById('q-notes').value.trim(),
+    };
+
+    // FormSubmit
+    const form = document.createElement('form');
+    form.action = 'https://formsubmit.co/ajax/mark@hibear.co';
+    form.method = 'POST';
+    form.style.display = 'none';
+
+    const addField = (name, val) => {
+      const inp = document.createElement('input');
+      inp.type = 'hidden'; inp.name = name; inp.value = val;
+      form.appendChild(inp);
+    };
+
+    addField('_subject', `Sample Request — ${data['Business Name']} (${data['Business Type']})`);
+    addField('_template', 'table');
+    addField('_captcha', 'false');
+    Object.entries(data).forEach(([k,v]) => addField(k, v));
+    document.body.appendChild(form);
 
     fetch(form.action, {
       method: 'POST',
-      body: data,
-      headers: { 'Accept': 'application/json' }
-    }).then(r => {
-      form.style.display = 'none';
-      document.getElementById('successMsg').style.display = 'block';
-    }).catch(() => {
-      form.submit(); // fallback
+      body: new FormData(form),
+      headers: { Accept: 'application/json' }
+    }).finally(() => {
+      document.body.removeChild(form);
+      showSlide(slides.length - 1);
+      document.getElementById('nav').style.display = 'none';
+      document.getElementById('progress-bar').style.width = '100%';
     });
+  }
+
+  // Keyboard nav
+  document.addEventListener('keydown', e => {
+    if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) {
+      if (e.key === 'Enter') { e.preventDefault(); next(); }
+      return;
+    }
+    if (e.key === 'Enter' || e.key === 'ArrowDown') next();
+    if (e.key === 'ArrowUp') prev();
+    // Choice shortcuts A-F
+    if (current === 5) {
+      const keys = ['a','b','c','d','e','f'];
+      const i = keys.indexOf(e.key.toLowerCase());
+      if (i >= 0) {
+        const choices = document.querySelectorAll('#q-type .choice');
+        if (choices[i]) { selectChoice(choices[i], 'q-type', true); }
+      }
+    }
+    if (current === 7) {
+      const keys = ['a','b','c','d','e'];
+      const i = keys.indexOf(e.key.toLowerCase());
+      if (i >= 0) {
+        const choices = document.querySelectorAll('#q-volume .choice');
+        if (choices[i]) { selectChoice(choices[i], 'q-volume', true); }
+      }
+    }
+    if (current === 6) {
+      const keys = ['a','b','c','d'];
+      const i = keys.indexOf(e.key.toLowerCase());
+      if (i >= 0) {
+        const choices = document.querySelectorAll('#q-products .choice');
+        if (choices[i]) toggleChoice(choices[i]);
+      }
+    }
   });
 </script>
 
